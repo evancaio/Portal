@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="pt-BR" class="h-full bg-gray-900">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Portal • Clientes</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: '#7c3aed',
+                            surface: '#0b1221'
+                        }
+                    }
+                }
+            }
+        </script>
+        <style>
+            .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            #modal.modal-hidden { display: none !important; }
+            #modal:not(.modal-hidden) { display: flex !important; }
+        </style>
+    </head>
+    <body class="h-full text-gray-100 antialiased">
+        <div class="min-h-full p-6 lg:p-12">
+            <div class="max-w-7xl mx-auto">
+        <header class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl lg:text-3xl font-semibold tracking-tight flex items-center gap-3">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-primary">
+                        <rect x="3" y="3" width="8" height="8" rx="1.5" fill="#7c3aed" />
+                        <rect x="13" y="3" width="8" height="8" rx="1.5" fill="#4f46e5" />
+                        <rect x="3" y="13" width="8" height="8" rx="1.5" fill="#06b6d4" />
+                        <rect x="13" y="13" width="8" height="8" rx="1.5" fill="#10b981" />
+                    </svg>
+                    Portal • Clientes
+                </h1>
+                <!-- descrição removida a pedido do usuário -->
+            </div>
+            <button onclick="openModal()" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium">
+                + Novo Cliente
+            </button>
+        </header>
+
+        <!-- Modal para Criar/Editar Cliente -->
+        <div id="modal" class="fixed inset-0 bg-black/50 items-center justify-center modal-hidden z-50">
+            <div class="bg-surface rounded-lg p-6 w-full max-w-md shadow-lg border border-gray-700" onclick="event.stopPropagation()">
+                <h2 class="text-xl font-semibold mb-4 text-white" id="modalTitle">Novo Cliente</h2>
+                <form id="clientForm" onsubmit="handleFormSubmit(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Nome *</label>
+                            <input type="text" id="clientName" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-primary" placeholder="Nome completo">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Telefone *</label>
+                            <input type="text" id="clientPhone" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-primary" placeholder="Telefone">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                            <input type="email" id="clientEmail" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-primary" placeholder="Email">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Plano</label>
+                            <input type="text" id="clientPlan" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-primary" placeholder="ex: básico, premium">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Status</label>
+                            <select id="clientStatus" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:border-primary">
+                                <option value="active">Ativo</option>
+                                <option value="trial">Trial</option>
+                                <option value="cancelled">Cancelado</option>
+                                <option value="pending">Pendente</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Data de Início</label>
+                            <input type="datetime-local" id="clientStartedAt" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:border-primary">
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600 font-medium">Cancelar</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 font-medium">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="mb-6 p-4 bg-gray-800/40 rounded-lg border border-gray-700">
+            <h3 class="text-sm font-medium text-gray-300 mb-4">Filtros</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="filterName" placeholder="Filtrar por nome..." class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-primary text-sm" onkeyup="applyFilters()">
+                <input type="text" id="filterPhone" placeholder="Filtrar por telefone..." class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:border-primary text-sm" onkeyup="applyFilters()">
+                <select id="filterStatus" class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white focus:outline-none focus:border-primary text-sm" onchange="applyFilters()">
+                    <option value="">Todos os status</option>
+                    <option value="active">Ativo</option>
+                    <option value="trial">Trial</option>
+                    <option value="cancelled">Cancelado</option>
+                    <option value="pending">Pendente</option>
+                </select>
+                <button onclick="clearFilters()" class="px-3 py-2 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600 text-sm font-medium">Limpar filtros</button>
+            </div>
+        </div>
+
+                <main class="space-y-6">
+                    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="bg-gradient-to-br from-gray-800 to-surface border border-gray-800 p-4 rounded-xl">
+                            <div class="text-sm text-gray-400">Total de clientes</div>
+                            <div id="total-clients" class="mt-3 text-3xl font-bold text-white">—</div>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                            <div class="text-sm text-gray-400">Ativos</div>
+                            <div id="active-count" class="mt-3 text-3xl font-semibold text-green-400">—</div>
+                        </div>
+                        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                            <div class="text-sm text-gray-400">Cancelados</div>
+                            <div id="cancelled-count" class="mt-3 text-3xl font-semibold text-red-400">—</div>
+                        </div>
+                    </section>
+
+                    <section class="bg-gradient-to-tr from-black/40 to-gray-800/40 p-6 rounded-2xl border border-gray-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-lg font-medium">Lista de clientes</h2>
+                            <div class="text-sm text-gray-400">Auto-refresh a cada 10s</div>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="text-xs text-gray-400 uppercase tracking-wider">
+                                    <tr>
+                                        <th class="pb-3 pr-4">ID</th>
+                                        <th class="pb-3 pr-4">Nome</th>
+                                        <th class="pb-3 pr-4">Telefone</th>
+                                        <th class="pb-3 pr-4">Email</th>
+                                        <th class="pb-3 pr-4">Plano</th>
+                                        <th class="pb-3 pr-4">Status</th>
+                                        <th class="pb-3 pr-4">Início</th>
+                                        <th class="pb-3 pr-4">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="text-sm text-gray-200">
+                                    <tr>
+                                        <td colspan="8" class="py-8 text-center text-gray-500" id="table-loading">Carregando dados…</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+
+        <script>
+            let allCustomers = [];
+            let editingPhone = null;
+
+            function openModal() {
+                editingPhone = null;
+                document.getElementById('clientForm').reset();
+                document.getElementById('modalTitle').textContent = 'Novo Cliente';
+                document.getElementById('clientPhone').disabled = false;
+                const modal = document.getElementById('modal');
+                modal.classList.remove('modal-hidden');
+                modal.style.display = 'flex';
+            }
+
+            function closeModal() {
+                const modal = document.getElementById('modal');
+                modal.classList.add('modal-hidden');
+                modal.style.display = 'none';
+                document.getElementById('clientForm').reset();
+            }
+
+            // Fechar modal ao clicar fora
+            document.getElementById('modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            function editCustomer(phone) {
+                const customer = allCustomers.find(c => c.phone === phone);
+                if (!customer) return;
+                
+                editingPhone = phone;
+                document.getElementById('clientName').value = customer.name || '';
+                document.getElementById('clientPhone').value = customer.phone || '';
+                document.getElementById('clientEmail').value = customer.email || '';
+                document.getElementById('clientPlan').value = customer.plan_name || '';
+                document.getElementById('clientStatus').value = customer.status || 'active';
+                
+                if (customer.started_at) {
+                    const date = new Date(customer.started_at);
+                    const iso = date.toISOString().slice(0, 16);
+                    document.getElementById('clientStartedAt').value = iso;
+                }
+                
+                document.getElementById('modalTitle').textContent = 'Editar Cliente';
+                document.getElementById('clientPhone').disabled = true;
+                document.getElementById('modal').classList.remove('modal-hidden');
+            }
+
+            async function handleFormSubmit(event) {
+                event.preventDefault();
+                
+                const name = document.getElementById('clientName').value.trim();
+                const phone = document.getElementById('clientPhone').value.trim();
+                const email = document.getElementById('clientEmail').value.trim();
+                const plan_name = document.getElementById('clientPlan').value.trim();
+                const status = document.getElementById('clientStatus').value;
+                const started_at = document.getElementById('clientStartedAt').value;
+                const submitBtn = event.target.querySelector('button[type="submit"]');
+
+                if (!name || !phone) {
+                    alert('Nome e telefone são obrigatórios');
+                    return;
+                }
+
+                // Desabilitar botão durante envio
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Salvando...';
+
+                // Converter datetime-local para ISO 8601 completo
+                let started_at_iso = null;
+                if (started_at) {
+                    const dt = new Date(started_at);
+                    started_at_iso = dt.toISOString();
+                }
+
+                const payload = {
+                    name,
+                    phone,
+                    email: email || null,
+                    plan_name: plan_name || null,
+                    status: status || 'active',
+                    started_at: started_at_iso
+                };
+
+                try {
+                    const res = await fetch('/api/customers/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        alert('Erro: ' + (err.message || 'Não foi possível salvar'));
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Salvar';
+                        return;
+                    }
+
+                    closeModal();
+                    await render();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Salvar';
+                } catch (e) {
+                    alert('Erro ao salvar: ' + e.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Salvar';
+                }
+            }
+
+            async function deleteCustomer(phone) {
+                if (!confirm(`Tem certeza que deseja deletar o cliente com telefone ${phone}?`)) {
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/customers/${encodeURIComponent(phone)}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        alert('Erro: ' + (err.message || 'Não foi possível deletar'));
+                        return;
+                    }
+
+                    await render();
+                } catch (e) {
+                    alert('Erro ao deletar: ' + e.message);
+                }
+            }
+
+            function applyFilters() {
+                const nameFilter = document.getElementById('filterName').value.toLowerCase();
+                const phoneFilter = document.getElementById('filterPhone').value.toLowerCase();
+                const statusFilter = document.getElementById('filterStatus').value;
+
+                const filtered = allCustomers.filter(c => {
+                    const matchName = !nameFilter || (c.name || '').toLowerCase().includes(nameFilter);
+                    const matchPhone = !phoneFilter || (c.phone || '').toLowerCase().includes(phoneFilter);
+                    const matchStatus = !statusFilter || c.status === statusFilter;
+                    return matchName && matchPhone && matchStatus;
+                });
+
+                renderTable(filtered);
+            }
+
+            function clearFilters() {
+                document.getElementById('filterName').value = '';
+                document.getElementById('filterPhone').value = '';
+                document.getElementById('filterStatus').value = '';
+                renderTable(allCustomers);
+            }
+
+            async function fetchCustomers() {
+                try {
+                    const res = await fetch('/customers', { cache: 'no-store' });
+                    if (!res.ok) throw new Error('Não foi possível carregar');
+                    return await res.json();
+                } catch (e) {
+                    console.error(e);
+                    return null;
+                }
+            }
+
+            function formatDate(iso) {
+                if (!iso) return '-';
+                try {
+                    const d = new Date(iso);
+                    return d.toLocaleDateString('pt-BR');
+                } catch { return '-'; }
+            }
+
+            function statusPill(status) {
+                const s = (status || 'active').toLowerCase();
+                const map = {
+                    active: 'text-green-300 bg-green-900/30',
+                    cancelled: 'text-red-300 bg-red-900/30',
+                    trial: 'text-sky-300 bg-sky-900/30',
+                    pending: 'text-amber-300 bg-amber-900/30'
+                };
+                const cls = map[s] || 'text-gray-300 bg-gray-800/30';
+                return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${cls}">${s.toUpperCase()}</span>`;
+            }
+
+            function renderTable(customers) {
+                const body = document.getElementById('table-body');
+
+                if (customers.length === 0) {
+                    body.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-gray-500">Nenhum cliente encontrado</td></tr>`;
+                    return;
+                }
+
+                body.innerHTML = customers.map(c => `
+                    <tr class="border-t border-gray-800/60 hover:bg-white/2">
+                        <td class="py-3 pr-4 text-gray-400">${c.id}</td>
+                        <td class="py-3 pr-4"><div class="font-medium text-white">${c.name || '-'}</div></td>
+                        <td class="py-3 pr-4 text-gray-300">${c.phone || '-'}</td>
+                        <td class="py-3 pr-4 text-gray-300">${c.email || '-'}</td>
+                        <td class="py-3 pr-4 text-gray-300">${c.plan_name || '-'}</td>
+                        <td class="py-3 pr-4">${statusPill(c.status)}</td>
+                        <td class="py-3 pr-4 text-gray-300">${formatDate(c.started_at)}</td>
+                        <td class="py-3 pr-4">
+                            <div class="flex gap-2">
+                                <button onclick="editCustomer('${c.phone}')" class="px-2 py-1 bg-blue-900/40 text-blue-300 hover:bg-blue-900/60 rounded text-xs font-medium">Editar</button>
+                                <button onclick="deleteCustomer('${c.phone}')" class="px-2 py-1 bg-red-900/40 text-red-300 hover:bg-red-900/60 rounded text-xs font-medium">Deletar</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            async function render() {
+                const customers = await fetchCustomers();
+                const totalEl = document.getElementById('total-clients');
+                const activeEl = document.getElementById('active-count');
+                const cancelledEl = document.getElementById('cancelled-count');
+                const body = document.getElementById('table-body');
+                const loading = document.getElementById('table-loading');
+
+                if (!customers) {
+                    if (loading) loading.textContent = 'Erro ao carregar dados. Verifique se o servidor está rodando.';
+                    totalEl.textContent = '-';
+                    activeEl.textContent = '-';
+                    cancelledEl.textContent = '-';
+                    return;
+                }
+
+                allCustomers = customers;
+                totalEl.textContent = customers.length;
+                activeEl.textContent = customers.filter(c => c.status === 'active').length;
+                cancelledEl.textContent = customers.filter(c => c.status === 'cancelled').length;
+
+                renderTable(customers);
+            }
+
+            render();
+            setInterval(render, 10000);
+        </script>
+    </body>
+</html>
